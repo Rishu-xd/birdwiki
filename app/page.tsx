@@ -726,7 +726,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }}
-          className="mt-9 flex w-full items-center gap-3 rounded-2xl border border-zinc-200 p-2 shadow-lg shadow-zinc-900/5 transition-[border-color,box-shadow] focus-within:border-emerald-500 focus-within:shadow-xl focus-within:shadow-emerald-900/10 backdrop-blur-2xl dark:border-zinc-800 dark:shadow-black/20 dark:focus-within:border-emerald-400"
+          className="mt-9 flex w-full items-center gap-3 rounded-2xl border border-zinc-200 p-2 shadow-lg shadow-zinc-900/5 transition-[border-color,box-shadow] focus-within:border-emerald-500 focus-within:shadow-xl focus-within:shadow-emerald-900/10 bg-black/50 backdrop-blur-2xl dark:border-zinc-800 dark:shadow-black/20 dark:focus-within:border-emerald-400"
         >
           <label htmlFor="bird-search" className="sr-only">
             Search BirdWiki
@@ -760,10 +760,7 @@ export default function Home() {
             placeholder="Search by name, family, or order..."
             className="min-w-0 flex-1 bg-transparent py-3 text-base text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
           />
-          <motion.div
-          className="p-2  border-white border-2  rounded-2xl"
           
-          >
 
           <motion.button
             type="button"
@@ -781,7 +778,7 @@ export default function Home() {
               />
             Random
           </motion.button>
-              </motion.div>
+              
         </motion.form>
 
         <motion.div
