@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AnimatePresence,
@@ -9,35 +10,14 @@ import {
   useMotionValue,
   useMotionValueEvent,
 } from "motion/react";
-
-const DATA_SOURCE =
-  "https://raw.githubusercontent.com/alchaincyf/huashu-bird-sticker/main/data/species.csv";
+import {
+  BIRD_DATA_SOURCE,
+  parseBirdsCsv,
+  getBirdSlug,
+  type Bird,
+} from "../lib/birds";
 
 const suggestions = ["Northern cardinal", "Bird calls", "Backyard birds"] as const;
-
-type Bird = {
-  id: string;
-  ioc_seq: string;
-  name_en: string;
-  name_zh_hans: string;
-  name_zh_hant: string;
-  scientific_name: string;
-  authority: string;
-  order: string;
-  family: string;
-  wikidata: string;
-  ebird: string;
-  gbif: string;
-  inaturalist: string;
-  sticker_kind: string;
-  sticker_license: string;
-  review_score: string;
-  meets_quality_bar: string;
-  reference_type: string;
-  reference_page: string;
-  reference_author: string;
-  reference_license: string;
-};
 
 function CountUpStat({ value, delay }: { value: number; delay: number }) {
   const count = useMotionValue(0);
@@ -180,84 +160,6 @@ async function findCommonsBirdImage(
   }
 
   return null;
-}
-
-function parseCsvLine(line: string): string[] {
-  const cells: string[] = [];
-  let current = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i += 1) {
-    const char = line[i];
-
-    if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"';
-        i += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-      continue;
-    }
-
-    if (char === "," && !inQuotes) {
-      cells.push(current);
-      current = "";
-      continue;
-    }
-
-    if (char === "\r") {
-      continue;
-    }
-
-    current += char;
-  }
-
-  cells.push(current);
-  return cells;
-}
-
-function parseSpeciesCsv(csvText: string): Bird[] {
-  const rows = csvText.trim().split(/\r?\n/);
-  if (rows.length < 2) return [];
-
-  const headers = parseCsvLine(rows[0]);
-  return rows.slice(1).flatMap((row) => {
-    if (!row.trim()) return [];
-
-    const values = parseCsvLine(row);
-    const record: Record<string, string> = {};
-
-    headers.forEach((header, index) => {
-      record[header] = values[index] ?? "";
-    });
-
-    const bird: Bird = {
-      id: record.id ?? "",
-      ioc_seq: record.ioc_seq ?? "",
-      name_en: record.name_en ?? "",
-      name_zh_hans: record.name_zh_hans ?? "",
-      name_zh_hant: record.name_zh_hant ?? "",
-      scientific_name: record.scientific_name ?? "",
-      authority: record.authority ?? "",
-      order: record.order ?? "",
-      family: record.family ?? "",
-      wikidata: record.wikidata ?? "",
-      ebird: record.ebird ?? "",
-      gbif: record.gbif ?? "",
-      inaturalist: record.inaturalist ?? "",
-      sticker_kind: record.sticker_kind ?? "",
-      sticker_license: record.sticker_license ?? "",
-      review_score: record.review_score ?? "",
-      meets_quality_bar: record.meets_quality_bar ?? "",
-      reference_type: record.reference_type ?? "",
-      reference_page: record.reference_page ?? "",
-      reference_author: record.reference_author ?? "",
-      reference_license: record.reference_license ?? "",
-    };
-
-    return bird.id ? [bird] : [];
-  });
 }
 
 function BirdResultImage({ bird }: { bird: Bird }) {
@@ -589,13 +491,13 @@ export default function Home() {
 
   const getBirdData = useCallback(() => {
     if (!dataRequestRef.current) {
-      dataRequestRef.current = fetch(DATA_SOURCE).then(async (response) => {
+      dataRequestRef.current = fetch(BIRD_DATA_SOURCE).then(async (response) => {
         if (!response.ok) {
           throw new Error("Bird data is unavailable.");
         }
 
         const csvText = await response.text();
-        return parseSpeciesCsv(csvText);
+        return parseBirdsCsv(csvText);
       });
     }
 
@@ -755,6 +657,15 @@ export default function Home() {
         transition={{ duration: 0.65, ease: "easeOut" }}
         className="relative z-10 w-full max-w-2xl text-center"
       >
+        <header className="mb-8">
+          <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            Explore the world of birds
+          </h1>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-white/85 sm:text-base">
+            Discover species by common name, scientific name, family, or order.
+          </p>
+        </header>
+
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -811,12 +722,11 @@ export default function Home() {
           </p>
         )}
         <motion.form
-          action="/"
-          method="get"
+          onSubmit={(event) => event.preventDefault()}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }}
-          className="mt-9 flex w-full items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-2 shadow-lg shadow-zinc-900/5 transition-[border-color,box-shadow] focus-within:border-emerald-500 focus-within:shadow-xl focus-within:shadow-emerald-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/20 dark:focus-within:border-emerald-400"
+          className="mt-9 flex w-full items-center gap-3 rounded-2xl border border-zinc-200 p-2 shadow-lg shadow-zinc-900/5 transition-[border-color,box-shadow] focus-within:border-emerald-500 focus-within:shadow-xl focus-within:shadow-emerald-900/10 backdrop-blur-2xl dark:border-zinc-800 dark:shadow-black/20 dark:focus-within:border-emerald-400"
         >
           <label htmlFor="bird-search" className="sr-only">
             Search BirdWiki
@@ -847,25 +757,31 @@ export default function Home() {
             name="q"
             value={query}
             onChange={(event) => handleQueryChange(event.target.value)}
-            placeholder="Search birds, habitats, or behaviors..."
+            placeholder="Search by name, family, or order..."
             className="min-w-0 flex-1 bg-transparent py-3 text-base text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
           />
+          <motion.div
+          className="p-2  border-white border-2  rounded-2xl"
+          
+          >
+
           <motion.button
             type="button"
             onClick={handleRandom}
-            whileTap={{scale:0.95, rotateX:30}}
-            whileHover={{scale:1.05}}
-            className="flex shrink-0 items-center cursor-pointer justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 dark:bg-emerald-500 dark:text-zinc-950 dark:hover:bg-emerald-400"
-          >
+            whileTap={{ scale: 0.95, rotateX: 30 }}
+            whileHover={{ scale: 1.05 }}
+            className="flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 dark:bg-emerald-500 dark:text-zinc-950 dark:hover:bg-emerald-400"
+            >
             <Image
               src="/svg/dice.svg"
               alt=""
               width={16}
               height={16}
               className="invert dark:invert-0"
-            />
+              />
             Random
           </motion.button>
+              </motion.div>
         </motion.form>
 
         <motion.div
@@ -897,9 +813,9 @@ export default function Home() {
             
             className="mt-8 p-4 text-left sm:p-5"
           >
-            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-white">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-white">
               Search results
-            </div>
+            </h2>
 
             {isLoading ? (
               <p className="rounded-2xl border border-white/20 bg-white/10 p-4 text-sm text-white shadow-lg shadow-black/10 backdrop-blur-xl">
@@ -909,12 +825,9 @@ export default function Home() {
               <ul className="space-y-3">
                 {results.map((bird) => (
                   <li key={bird.id}>
-                    <motion.button
-                      type="button"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setSelectedBird(bird)}
-                      className="w-full cursor-pointer rounded-2xl border border-white/25 bg-white/10 p-4 text-left shadow-lg shadow-black/10 backdrop-blur-xl transition-[background-color,border-color,box-shadow] hover:border-white/40 hover:bg-white/15 hover:shadow-xl hover:shadow-black/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+                    <Link
+                      href={`/birds/${getBirdSlug(bird)}`}
+                      className="block w-full cursor-pointer rounded-2xl border border-white/25 bg-white/10 p-4 text-left shadow-lg shadow-black/10 backdrop-blur-xl transition-[background-color,border-color,box-shadow] hover:border-white/40 hover:bg-white/15 hover:shadow-xl hover:shadow-black/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
                     >
                       <div className="flex items-start gap-4">
                         <BirdResultImage bird={bird} />
@@ -939,7 +852,7 @@ export default function Home() {
                           </div>
                         </div>
                       </div>
-                    </motion.button>
+                    </Link>
                   </li>
                 ))}
               </ul>

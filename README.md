@@ -20,6 +20,12 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Bird profiles
+
+Selecting a bird search result opens its server-rendered species profile at `/birds/<bird-name>-<species-id>`. Profiles include taxonomy, bird-specific metadata, and matched Wikidata descriptions or IOC breeding ranges when available through GBIF. External facts link to their sources. The generated `/sitemap.xml` contains only valid catalog records, and `/robots.txt` advertises it to crawlers. Unknown bird URLs return HTTP 404 before page rendering.
+
+Run parser and catalog tests with `npm test`; run `npm run lint` and `npm run build` before deployment.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
